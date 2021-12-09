@@ -1,4 +1,5 @@
 # -*- coding:UTF-8 -*-
+
 import hashlib
 import random
 import re
@@ -24,14 +25,14 @@ class PaperSpider:
                           "Chrome/86.0.4240.183 Safari/537.36",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,"
                       "application/signed-exchange;v=b3;q=0.9"}
-        self.databaseDriver = DatabaseDriver(host="49.232.157.22", port=3306, user="BUAA", passwd="BUAA1821",
-                                             database_name="BUAA")
+        self.databaseDriver = DatabaseDriver(host="124.70.63.71", port=3306, user="root", passwd="root",
+                                             database_name="scholar")
         self.numOfDriver = 10
         self.listOfDriver = {}
         for i in range(self.numOfDriver):
             driverAndLock = {
-                "driver": DatabaseDriver(host="49.232.157.22", port=3306, user="BUAA", passwd="BUAA1821",
-                                         database_name="BUAA"),
+                "driver": DatabaseDriver(host="124.70.63.71", port=3306, user="root", passwd="root",
+                                             database_name="scholar"),
                 "lock": threading.Lock()
             }
             self.listOfDriver[str(i)] = driverAndLock
@@ -43,8 +44,7 @@ class PaperSpider:
 
     def urlEncode(self, keyword, page_number):
         keyword = quote(keyword, encoding="utf-8")
-        path = "https://xueshu.baidu.com/s?wd=" + keyword + "&pn=" + str(
-            page_number) + "&tn=SE_baiduxueshu_c1gjeupa&ie=utf-8&usm=1&sc_f_para=sc_tasktype%3D%7BfirstSimpleSearch%7D&sc_hit=1"
+        path = "https://xueshu.baidu.com/s?wd=" + keyword + "&pn=" + str(page_number) + "&tn=SE_baiduxueshu_c1gjeupa&ie=utf-8&usm=1&sc_f_para=sc_tasktype%3D%7BfirstSimpleSearch%7D&sc_hit=1"
         return path
 
     def getPageNumber(self, keyword):
@@ -96,7 +96,6 @@ class PaperSpider:
                     response = urllib.request.urlopen(request)
                     time.sleep(5)
                     html = response.read().decode("utf-8")
-                    print(html)
                     self.listOfDriver[str(i)]["lock"].acquire()
                     self.newThreadParse(html, str(i))
                     page_number += 10

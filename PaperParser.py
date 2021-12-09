@@ -30,7 +30,7 @@ class PaperParser(threading.Thread):
             paper_link = bs.select("h3[class='t c_font']")
             # print("hhh")
             for li in paper_link:
-                self.savePaperByUrl("https:" + li.a.attrs['href'])
+                self.savePaperByUrl(li.a.attrs['href'])
                 time.sleep(5)
             self.databaseDriver.insertPapers(self.paperList)
         finally:

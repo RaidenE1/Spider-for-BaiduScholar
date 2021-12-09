@@ -63,9 +63,6 @@ class AuthorParser(threading.Thread):
         try:
             domain = searchResult_textDiv.select("span[class='aFiled']", limit=1)[0].string
         except:
-            # try:
-            #     name = main_info.h3.span.string
-            # except:
             domain = ""
         return ','.join(domain.lstrip().rstrip().replace('\n', '').replace('\r', '').split(" "))
 
@@ -81,5 +78,4 @@ class AuthorParser(threading.Thread):
             "id": self.getExpertID(name, affiliate),
             "domain": self.getDomain(searchResult_textDiv),
         }
-        # print(item)
         self.expertList.append(item)

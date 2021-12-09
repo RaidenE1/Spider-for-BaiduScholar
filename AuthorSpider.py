@@ -24,14 +24,14 @@ class AuthorSpider:
         self.headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
                           "Chrome/86.0.4240.183 Safari/537.36"}
-        self.databaseDriver = DatabaseDriver(host="49.232.157.22", port=3306, user="BUAA", passwd="BUAA1821",
-                                             database_name="BUAA")
+        self.databaseDriver = DatabaseDriver(host="124.70.63.71", port=3306, user="root", passwd="root",
+                                             database_name="scholar")
         self.numOfDriver = 10
         self.listOfDriver = {}
         for i in range(self.numOfDriver):
             driverAndLock = {
-                "driver": DatabaseDriver(host="49.232.157.22", port=3306, user="BUAA", passwd="BUAA1821",
-                                         database_name="BUAA"),
+                "driver": DatabaseDriver(host="124.70.63.71", port=3306, user="root", passwd="root",
+                                             database_name="scholar"),
                 "lock": threading.Lock()
             }
             self.listOfDriver[str(i)] = driverAndLock
@@ -99,7 +99,6 @@ def echo():
     try:
         while (True):
             keyword = GBK2312()
-            keyword = '原仓周'
             print("开始爬取关键字：" + keyword)
             authorSpider.searchAuthorListByKeyWord(keyword)
     except Exception as e:

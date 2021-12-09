@@ -10,7 +10,7 @@ class DatabaseDriver:
         self.user = user
         self.passwd = passwd
         self.database_name = database_name
-        self.db = pymysql.connect(host=host, port=port, user=user, passwd=passwd, db=database_name)  # 打开数据库连接
+        self.db = pymysql.connect(host=host, port=port, user=user, passwd=passwd, db=database_name, charset='utf8')  # 打开数据库连接
 
         self.cursor = self.db.cursor()  # 使用 cursor() 方法创建一个游标对象 cursor
 
@@ -20,7 +20,18 @@ class DatabaseDriver:
     def insertPapers(self, paperList):
         sql = "INSERT INTO document(title, experts, dtype, documentid, time_, doi, isbn, application_number, cited_quantity, summary, keywords, link, origin) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         for item in paperList:
-            print(item)
+            print(item['time'])
+            if not item['time']:
+                item['time'] = '1900-01-01'
+            else:
+                time_list = item['time'].split('-')
+                if time_list[1] == '00':
+                    time_list[1] = '01'
+                if time_list[2] == '00':
+                    time_list[2] = '01'
+                item['time'] = '-'.join(time_list)
+            if not item["citedQuantity"]:
+                item["citedQuantity"] = 0
             try:
                 self.cursor.execute(sql, (item["title"], ',' + ','.join(item["authors"]) + ',', item["category"], item["id"],
                                           item["time"],
@@ -31,7 +42,7 @@ class DatabaseDriver:
                 print("Insert successfully!")
             except Exception as e:
                 self.db.rollback()
-                print("Fail:", end="")
+                print("Fail:")
                 print(e)
 
 
@@ -59,24 +70,24 @@ class DatabaseDriver:
             print("关键词数据库记录查询失败:", end="")
             print(e)
 
-    def insertDocument(self, title, authors, category, id, time, DOI, ISBN, patentNumber, citedQuantity, abstract,
-                       keywords, link, source):
-        sql = "INSERT INTO document(title, experts, dtype, documentid, time_, doi, isbn, application_number, cited_quantity, summary, keywords, link, origin) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        # 使用 execute()  方法执行 SQL 查询
-        try:
-            self.cursor.execute(sql, (
-            title, ',' + ','.join(authors) + ',', category, id, time, DOI, ISBN, patentNumber, citedQuantity, abstract,
-            ','.join(keywords), link, source))
-            self.db.commit()
-            # print("Insert successfully!")
-            return True
-        except Exception as e:
-            self.db.rollback()
-            # print("Fail:", end="")
-            # print(e)
-            return str(e)
-        # 关闭数据库连接
-        # self.db.close()
+    # def insertDocument(self, title, authors, category, id, time, DOI, ISBN, patentNumber, citedQuantity, abstract,
+    #                    keywords, link, source):
+    #     sql = "INSERT INTO document(title, experts, dtype, documentid, time_, doi, isbn, application_number, cited_quantity, summary, keywords, link, origin) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+    #     # 使用 execute()  方法执行 SQL 查询
+    #     try:
+    #         self.cursor.execute(sql, (
+    #         title, ',' + ','.join(authors) + ',', category, id, time, DOI, ISBN, patentNumber, citedQuantity, abstract,
+    #         ','.join(keywords), link, source))
+    #         self.db.commit()
+    #         print("Insert successfully!")
+    #         return True
+    #     except Exception as e:
+    #         self.db.rollback()
+    #         print("Fail:", end="")
+    #         print(e)
+    #         return str(e)
+    #     # 关闭数据库连接
+    #     # self.db.close()
 
     def getPageNumber(self, keyword):
         sql = "SELECT quantity FROM paper_spider_record WHERE name= %s"
@@ -153,7 +164,7 @@ class DatabaseDriver:
             print("Update expertName successfully!")
         except Exception as e:
             self.db.rollback()
-            print("数据库更新关键词失败:", end="")
+            print("expert数据库更新关键词失败:", end="")
             print(e)
 
     def updateAuthorKeyword(self, keyword):
@@ -187,7 +198,7 @@ class DatabaseDriver:
             print(e)
 
 
-if __name__ == '__main__':
-    databaseDriver = DatabaseDriver(host="49.232.157.22", port=3306, user="BUAA", passwd="BUAA1821",
-                                    database_name="BUAA")
-    print(len(databaseDriver.getExpert("5")))
+# if __name__ == '__main__':
+#     databaseDriver = DatabaseDriver(host="49.232.157.22", port=3306, user="BUAA", passwd="BUAA1821",
+#                                     database_name="BUAA")
+#     print(len(databaseDriver.getExpert("5")))
