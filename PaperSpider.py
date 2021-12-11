@@ -12,6 +12,8 @@ from urllib.parse import quote
 from bs4 import BeautifulSoup
 from pinyin import pinyin
 import ssl
+from elasticsearch import Elasticsearch
+
 ssl._create_default_https_context = ssl._create_unverified_context
 
 from DatabaseDriver import DatabaseDriver

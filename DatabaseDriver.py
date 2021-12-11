@@ -1,5 +1,6 @@
 # -*- coding:UTF-8 -*-
 import pymysql
+from elasticsearch import Elasticsearch
 
 
 class DatabaseDriver:
@@ -18,27 +19,47 @@ class DatabaseDriver:
         self.db.close()
 
     def insertPapers(self, paperList):
-        sql = "INSERT INTO document(title, experts, dtype, documentid, time_, doi, isbn, application_number, cited_quantity, summary, keywords, link, origin) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        # sql = "INSERT INTO document( doi, isbn, application_number, ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         for item in paperList:
-            print(item['time'])
+            print(item)
             if not item['time']:
                 item['time'] = '1900-01-01'
             else:
                 time_list = item['time'].split('-')
-                if time_list[1] == '00':
-                    time_list[1] = '01'
-                if time_list[2] == '00':
-                    time_list[2] = '01'
-                item['time'] = '-'.join(time_list)
+                if len(time_list) < 3:
+                    item['time'] = time_list[0] + '-01-01'
+                else:
+                    if time_list[1] == '00':
+                        time_list[1] = '01'
+                    if time_list[2] == '00':
+                        time_list[2] = '01'
+                    item['time'] = '-'.join(time_list)
             if not item["citedQuantity"]:
                 item["citedQuantity"] = 0
             try:
-                self.cursor.execute(sql, (item["title"], ',' + ','.join(item["authors"]) + ',', item["category"], item["id"],
-                                          item["time"],
-                                          item["DOI"], item["ISBN"], item['patentNumber'],
-                                          item["citedQuantity"],
-                                          item["abstract"], ','.join(item["keywords"]), item["link"], item["source"]))
-                self.db.commit()
+
+                es = Elasticsearch(hosts="124.70.63.71", port=9200)
+                data = {"documentid": item["id"], "title": item["title"], "dtype": item["category"], "experts": ',' + ','.join(item["authors"]) + ','\
+                    , "keywords" : ','.join(item["keywords"]), "summary" : item["abstract"], "cited_quantity" : item["citedQuantity"],\
+                        "link" : item["link"], "origin" : item["source"], "time" : item["time"], "is_favor" : False, "views" : 0}
+                res = es.index(index="document3", doc_type = "_doc", body = data)
+                for _keyword in item["keywords"]:
+                    body = {
+                        "query":{
+                            "match":{
+                                "keyword" : _keyword
+                            }
+                        }
+                    }
+                    res = es.search(index="keyword", doc_type = "_doc", body = body)
+                    if res["hits"]["total"]["value"] == 0:
+                        data = {"keyword" : _keyword, "view" : 0, "citedNum" : 1}
+                        res = es.index(index="keyword", doc_type = "_doc", body = data)
+                    else:
+                        assert res["hits"]["total"]["value"] == 1
+                        data = {"keyword" : _keyword, "view" : res["hits"]["hits"][0]["_source"]["view"], "citedNum" : res["hits"]["hits"][0]["_source"]["citedNum"] + 1}
+                        res = es.index(index="keyword", doc_type = "_doc", id = res["hits"]["hits"][0]["_id"], body = data)
+                    print(res)
                 print("Insert successfully!")
             except Exception as e:
                 self.db.rollback()
@@ -69,25 +90,6 @@ class DatabaseDriver:
         except Exception as e:
             print("关键词数据库记录查询失败:", end="")
             print(e)
-
-    # def insertDocument(self, title, authors, category, id, time, DOI, ISBN, patentNumber, citedQuantity, abstract,
-    #                    keywords, link, source):
-    #     sql = "INSERT INTO document(title, experts, dtype, documentid, time_, doi, isbn, application_number, cited_quantity, summary, keywords, link, origin) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-    #     # 使用 execute()  方法执行 SQL 查询
-    #     try:
-    #         self.cursor.execute(sql, (
-    #         title, ',' + ','.join(authors) + ',', category, id, time, DOI, ISBN, patentNumber, citedQuantity, abstract,
-    #         ','.join(keywords), link, source))
-    #         self.db.commit()
-    #         print("Insert successfully!")
-    #         return True
-    #     except Exception as e:
-    #         self.db.rollback()
-    #         print("Fail:", end="")
-    #         print(e)
-    #         return str(e)
-    #     # 关闭数据库连接
-    #     # self.db.close()
 
     def getPageNumber(self, keyword):
         sql = "SELECT quantity FROM paper_spider_record WHERE name= %s"
