@@ -43,6 +43,10 @@ class DatabaseDriver:
                     , "keywords" : ','.join(item["keywords"]), "summary" : item["abstract"], "cited_quantity" : item["citedQuantity"],\
                         "link" : item["link"], "origin" : item["source"], "time" : item["time"], "is_favor" : False, "views" : 0}
                 res = es.index(index="document3", doc_type = "_doc", body = data)
+                print()
+                print(res)
+                print("Insert doc successfully")
+                print()
                 for _keyword in item["keywords"]:
                     body = {
                         "query":{
@@ -74,6 +78,10 @@ class DatabaseDriver:
             try:
                 self.cursor.execute(sql, (item["id"], item["name"], item["affiliate"], item["domain"]))
                 self.db.commit()
+                es = Elasticsearch(hosts="124.70.63.71", port=9200)
+                data = {"expertid" : item["id"], "name" : item["name"], "org" : item["affiliate"], "domain" : item["domain"], "cooperationNum" : 0}
+                res = es.index(index="expert", doc_type = "_doc", body = data)
+                print(res)
                 print("Insert successfully!")
             except Exception as e:
                 self.db.rollback()
