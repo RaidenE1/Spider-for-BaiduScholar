@@ -19,7 +19,7 @@ class DatabaseDriver:
         self.db.close()
 
     def insertPapers(self, paperList):
-        # sql = "INSERT INTO document( doi, isbn, application_number, ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        sql = "INSERT INTO document(title, experts, dtype, documentid, time_, doi, isbn, application_number, cited_quantity, summary, keywords, link, origin) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         for item in paperList:
             print(item)
             if not item['time']:
@@ -37,20 +37,25 @@ class DatabaseDriver:
             if not item["citedQuantity"]:
                 item["citedQuantity"] = 0
             try:
-
+                self.cursor.execute(sql, (item["title"], ',' + ','.join(item["authors"]) + ',', item["category"], item["id"],
+                                          item["time"],
+                                          item["DOI"], item["ISBN"], item['patentNumber'],
+                                          item["citedQuantity"],
+                                          item["abstract"], ','.join(item["keywords"]), item["link"], item["source"]))
+                self.db.commit()
                 es = Elasticsearch(hosts="124.70.63.71", port=9200)
                 data = {"documentid": item["id"], "title": item["title"], "dtype": item["category"], "experts": ',' + ','.join(item["authors"]) + ','\
-                    , "keywords" : ','.join(item["keywords"]), "summary" : item["abstract"], "cited_quantity" : item["citedQuantity"],\
+                    , "summary" : item["abstract"], "cited_quantity" : item["citedQuantity"],\
                         "link" : item["link"], "origin" : item["source"], "time" : item["time"], "is_favor" : False, "views" : 0}
+                if len(item["keywords"]) == 1 and '；' in item["keywords"][0]:
+                    item["keywords"] = item["keywords"][0].split("；")
+                data["keywords"] = ','.join(item["keywords"])
                 res = es.index(index="document3", doc_type = "_doc", body = data)
-                print()
-                print(res)
                 print("Insert doc successfully")
-                print()
                 for _keyword in item["keywords"]:
                     body = {
                         "query":{
-                            "match":{
+                            "term":{
                                 "keyword" : _keyword
                             }
                         }
